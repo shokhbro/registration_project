@@ -1,44 +1,78 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:registration_project/page/home_page.dart';
-import 'package:registration_project/page/register.dart';
+import 'package:registration_project/page/login_page.dart';
 import 'package:registration_project/page/user.dart';
 
-class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+class Register extends StatefulWidget {
+  const Register({super.key});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  State<Register> createState() => RegisterState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class RegisterState extends State<Register> {
+  final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
+
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  String? _errorMessage;
 
-  void _login() {
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
+
+  void _register() {
     if (_formKey.currentState!.validate()) {
-      setState(() {
-        _errorMessage = null;
-      });
+      UserService().register(_emailController.text, _passwordController.text);
 
-      if (UserService()
-          .login(_emailController.text, _passwordController.text)) {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (ctx) => const HomePage(),
-          ),
-        );
-
-        _emailController.clear();
-        _passwordController.clear();
-      } else {
-        setState(() {
-          _errorMessage = 'Invalid email or password';
-        });
-      }
+      _showSuccessDialog();
     }
+  }
+
+  void _showSuccessDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Success"),
+          content: const Text("Your account has been activated"),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(
+                    builder: (ctx) => const HomePage(),
+                  ),
+                );
+
+                _nameController.clear();
+                _emailController.clear();
+                _passwordController.clear();
+                _confirmPasswordController.clear();
+              },
+              child: const Text("OK"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  String? _validateName(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Please enter your name';
+    }
+    return null;
   }
 
   String? _validateEmail(String? value) {
@@ -57,6 +91,15 @@ class _LoginPageState extends State<LoginPage> {
     return null;
   }
 
+  String? _validateConfirmPassword(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Please re-enter your password';
+    } else if (value != _passwordController.text) {
+      return 'Passwords do not match';
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -66,11 +109,35 @@ class _LoginPageState extends State<LoginPage> {
           child: Column(
             children: [
               const Gap(60),
+              Row(
+                children: [
+                  const Gap(15),
+                  Container(
+                    width: 35,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.grey.shade300,
+                    ),
+                    child: Center(
+                      child: IconButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                        icon: const Icon(
+                          CupertinoIcons.back,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const Gap(10),
               const Row(
                 children: [
                   Gap(20),
                   Text(
-                    "Welcome back",
+                    "Register",
                     style: TextStyle(
                       fontFamily: 'Rowdies',
                       fontSize: 25,
@@ -83,24 +150,42 @@ class _LoginPageState extends State<LoginPage> {
                 children: [
                   Gap(20),
                   Text(
-                    "Let's Login to Connect your email",
+                    "Create your account for your schedule",
                     style: TextStyle(
                       fontSize: 15,
                     ),
                   ),
                 ],
               ),
-              const Gap(10),
               Form(
                 key: _formKey,
                 child: Padding(
-                  padding: const EdgeInsets.all(15.0),
+                  padding: const EdgeInsets.all(20),
                   child: Column(
                     children: [
+                      TextFormField(
+                        controller: _nameController,
+                        keyboardType: TextInputType.text,
+                        decoration: InputDecoration(
+                          contentPadding: const EdgeInsets.all(17),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          prefixIcon: const Icon(
+                            CupertinoIcons.person,
+                            color: Colors.grey,
+                          ),
+                          hintText: 'Your name',
+                          hintStyle: TextStyle(color: Colors.grey.shade400),
+                        ),
+                        validator: _validateName,
+                      ),
+                      const Gap(15),
                       TextFormField(
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
                         decoration: InputDecoration(
+                          contentPadding: const EdgeInsets.all(17),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
@@ -108,50 +193,63 @@ class _LoginPageState extends State<LoginPage> {
                             Icons.email_outlined,
                             color: Colors.grey,
                           ),
-                          hintText: 'name@example.com',
+                          hintText: 'Your Email',
+                          hintStyle: TextStyle(color: Colors.grey.shade400),
                         ),
                         validator: _validateEmail,
                       ),
-                      const Gap(20),
+                      const Gap(15),
                       TextFormField(
                         controller: _passwordController,
                         obscureText: true,
                         keyboardType: TextInputType.text,
                         decoration: InputDecoration(
+                          contentPadding: const EdgeInsets.all(17),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
                           prefixIcon: const Icon(
-                            Icons.password,
+                            Icons.vpn_key_outlined,
                             color: Colors.grey,
                           ),
-                          hintText: 'password',
+                          suffixIcon: const Icon(
+                            CupertinoIcons.eye_slash,
+                            size: 20,
+                          ),
+                          hintText: 'Your password',
+                          hintStyle: TextStyle(color: Colors.grey.shade400),
                         ),
                         validator: _validatePassword,
                       ),
                       const Gap(15),
-                      if (_errorMessage != null)
-                        Text(
-                          _errorMessage!,
-                          style: const TextStyle(color: Colors.red),
-                        ),
-                      const Gap(15),
-                      const Row(
-                        children: [
-                          Text(
-                            "Forget your password?",
-                            style: TextStyle(
-                              color: Colors.grey,
-                            ),
+                      TextFormField(
+                        controller: _confirmPasswordController,
+                        keyboardType: TextInputType.text,
+                        obscureText: true,
+                        decoration: InputDecoration(
+                          contentPadding: const EdgeInsets.all(17),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
                           ),
-                        ],
+                          prefixIcon: const Icon(
+                            Icons.vpn_key_outlined,
+                            color: Colors.grey,
+                          ),
+                          suffixIcon: const Icon(
+                            CupertinoIcons.eye_slash,
+                            size: 20,
+                          ),
+                          hintText: 'Re-enter your password',
+                          hintStyle: TextStyle(color: Colors.grey.shade400),
+                        ),
+                        validator: _validateConfirmPassword,
                       ),
                       const Gap(10),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           const Text(
-                            "Don't have an account?",
+                            "You have an account?",
                             style: TextStyle(
                               color: Colors.grey,
                             ),
@@ -161,12 +259,12 @@ class _LoginPageState extends State<LoginPage> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const Register(),
+                                  builder: (context) => const LoginPage(),
                                 ),
                               );
                             },
                             child: const Text(
-                              "Sign up here",
+                              "Sign in here",
                               style: TextStyle(
                                 color: Colors.black,
                                 decoration: TextDecoration.underline,
@@ -175,12 +273,12 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 180),
+                      const Gap(110),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           InkWell(
-                            onTap: _login,
+                            onTap: _register,
                             child: Container(
                               width: 310,
                               height: 50,
@@ -190,7 +288,7 @@ class _LoginPageState extends State<LoginPage> {
                               ),
                               child: const Center(
                                 child: Text(
-                                  "Log in",
+                                  "Register",
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontFamily: 'Rowdies',
@@ -202,59 +300,7 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         ],
                       ),
-                      const Gap(15),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          Container(
-                            width: 150,
-                            height: 52,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(10),
-                              color: Colors.grey.shade200,
-                            ),
-                            child: const Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.apple),
-                                Text(
-                                  " Apple",
-                                  style: TextStyle(
-                                    color: Colors.black,
-                                    fontSize: 17,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Container(
-                            width: 150,
-                            height: 52,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(10),
-                              color: Colors.grey.shade200,
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Image.asset(
-                                  "assets/images/google.png",
-                                  width: 18,
-                                  height: 20,
-                                ),
-                                const Text(
-                                  " Google",
-                                  style: TextStyle(
-                                    color: Colors.black,
-                                    fontSize: 17,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const Gap(15),
+                      const Gap(16),
                       const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [

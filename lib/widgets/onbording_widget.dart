@@ -96,7 +96,7 @@ class OnbordingWidget extends StatelessWidget {
             onTap: () {
               if (pageIndex == 2) {
                 Navigator.push(context,
-                    MaterialPageRoute(builder: (context) => StartPape()));
+                    MaterialPageRoute(builder: (context) =>const StartPape()));
               } else {
                 pageController.nextPage(
                   duration: const Duration(milliseconds: 500),

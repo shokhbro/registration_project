@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:registration_project/page/login_page.dart';
+import 'package:registration_project/page/register.dart';
 
 class StartPape extends StatefulWidget {
   const StartPape({super.key});
@@ -67,6 +68,10 @@ class _StartPapeState extends State<StartPape> {
             ),
             const Gap(20),
             InkWell(
+              onTap: () {
+                Navigator.of(context).push(
+                    MaterialPageRoute(builder: (ctx) => const Register()));
+              },
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
